@@ -2,35 +2,47 @@ version: '3'
 services:
   app:
     image: armadik/app:dev
+    container_name: ${ENV:-dev}_app
     build:
       context: app
       dockerfile: Dockerfile
+    depends_on:
+      - kafka
     deploy:
       resources:
         limits:
-          cpus: 2
-          memory: 512M
+          cpus: '2'
+          memory: '512M'
+    environment:
+       APP_POLLING_INTERVAL: ${APP_POLLING_INTERVAL:-1}
+       APP_RANGE_DATA: ${APP_RANGE_DATA:-50}
+       APP_KAFKA_HOST: ${APP_KAFKA_HOST:-kafka:9092}
+       APP_KAFKA_TOPIC: ${APP_KAFKA_TOPIC:-ch-topic}
 
   zookeeper:
     image: confluentinc/cp-zookeeper:6.1.1
+    container_name: zookeeper
     deploy:
       resources:
         limits:
-          cpus: 2
-          memory: 512M
+          cpus: '2'
+          memory: '512M'
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - 22181:2181
+      - 2181:2181
 
   kafka:
     image: confluentinc/cp-kafka:6.1.1
+    container_name: kafka
+    depends_on:
+    - zookeeper
     deploy:
       resources:
         limits:
-          cpus: 2
-          memory: 512M
+          cpus: '2'
+          memory: '512M'
     depends_on:
       - zookeeper
     ports:
@@ -41,29 +53,22 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-  init-kafka:
-    image: confluentinc/cp-kafka:6.1.1
-    depends_on:
-      - kafka
-    entrypoint: [ '/bin/sh', '-c' ]
-    command: |
-      "
-      # blocks until kafka is reachable
-      kafka-topics --bootstrap-server kafka:29092 --list
 
-      echo -e 'Creating kafka topics'
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic my-topic-1 --replication-factor 1 --partitions 1
-      echo -e 'Successfully created the following topics:'
-      kafka-topics --bootstrap-server kafka:29092 --list
-      "
-
-  click_server:
+  clickhouse_server:
+    container_name: clickhouse_server
     image: yandex/clickhouse-server:21.3
     deploy:
       resources:
         limits:
-          cpus: 2
-          memory: 512M
+          cpus: '2'
+          memory: '512M'
     ports:
       - "8123:8123"
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-kafka}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-kafka}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-kafka}
+    volumes:
+      - ./click_initdb:/docker-entrypoint-initdb.d

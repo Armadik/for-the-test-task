@@ -2,12 +2,26 @@
 import os
 import time
 import random
-import json
-#import kafka-python
+from json import dumps
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
 
 from utils import get_logger
 
 log = get_logger(__name__)
+
+
+def send_kafka(data, kafka_topic, kafka_host):
+    log.info("Creating kafka producer: " + kafka_host)
+
+    try:
+        producer = KafkaProducer(bootstrap_servers=[kafka_host],
+                             value_serializer=lambda x:
+                             dumps(x).encode('utf-8'))
+        log.info("Kafka send topic: " + kafka_topic)
+        producer.send(kafka_topic, value=data)
+    except KafkaError as exc:
+        log.info("kafka producer - Exception during connecting to broker - {}".format(exc))
 
 
 def ranger_data(prefix, range_int=int(51)):
@@ -15,32 +29,33 @@ def ranger_data(prefix, range_int=int(51)):
     for i in range(1, range_int):
         p = prefix + f"{i:02d}"
         i = random.randrange(0, 10 * i)
-        d[p] = i
-        # print(prefix + f"{i:02d}", random.randrange(0, 10 * i), sep=":")
+        d[p] = float(i)
     return d
 
 
-def get_data(range_data):
-    print("timestamp: " + str(time.time()))
+def get_data(range_data, kafka_topic, kafka_host):
+    u_time = {'timestamp': time.time()}
     bid = ranger_data("bid_", range_data)
     ask = ranger_data("ask_", range_data)
-    data = {
+    stats_data = {
         "bid": sum(bid.values())/len(bid.values()),
         "ask": sum(ask.values())/len(ask.values())
     }
-    print(bid)
-    print(ask)
-    print("stats:", json.dumps(data))
+    stats = {'stats': stats_data}
+    data = {**u_time, **bid, **ask, **stats}
+    send_kafka(dumps(data), kafka_topic, kafka_host)
 
 
 def main():
     """Main entry point"""
-    polling_interval = int(os.getenv("POLLING_INTERVAL", 3))
-    range_data = int(os.getenv("RANGE_DATA", 10))
+    polling_interval = int(os.getenv("APP_POLLING_INTERVAL", 3))
+    range_data = int(os.getenv("APP_RANGE_DATA", 10))
+    kafka_host = os.getenv("APP_KAFKA_HOST", "localhost:29092")
+    kafka_topic = os.getenv("APP_KAFKA_TOPIC", "my-topic")
 
     while True:
         time.sleep(polling_interval)
-        get_data(range_data)
+        get_data(range_data, kafka_topic, kafka_host)
 
 
 if __name__ == "__main__":
