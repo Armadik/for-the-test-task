@@ -55,7 +55,6 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-
   clickhouse_server:
     container_name: clickhouse_server
     image: yandex/clickhouse-server:21.3
@@ -71,4 +70,20 @@ services:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-kafka}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-kafka}
     volumes:
-      - ./click_initdb:/docker-entrypoint-initdb.d
+      - ./clickhouse/initsql:/docker-entrypoint-initdb.d
+      - ./clickhouse/config/allow_experimental_map_type.xml:/etc/clickhouse-server/users.d/allow_experimental_map_type.xml
+
+  grafana:
+      image: grafana/grafana:9.3.2
+      container_name: grafana
+      depends_on:
+        - clickhouse_server
+      ports:
+        - "3000:3000"
+      volumes:
+         - ./grafana:/etc/grafana/provisioning
+      environment:
+        - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+        - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-grafana}
+        - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-grafana}
+        - GF_USERS_ALLOW_SIGN_UP=false
