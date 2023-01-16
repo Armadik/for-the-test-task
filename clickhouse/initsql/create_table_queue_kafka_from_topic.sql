@@ -1,4 +1,3 @@
--- Create table
 CREATE TABLE IF NOT EXISTS kafka.queue_kafka_from_topic (
     timestamp DateTime('Europe/Moscow'),
     bid_01	FLOAT,
@@ -102,5 +101,6 @@ CREATE TABLE IF NOT EXISTS kafka.queue_kafka_from_topic (
     ask_49	FLOAT,
     ask_50	FLOAT,
     stats Map(String, FLOAT)
-) ENGINE = Kafka('kafka:9092', 'ch-topic', 'group1', 'JSONEachRow') settings kafka_thread_per_consumer = 0, kafka_num_consumers = 1;
+)ENGINE = Kafka('kafka:9092', 'ch-topic', 'group', 'JSONEachRow')
+--) ENGINE = Kafka('kafka:9092', 'ch-topic', 'group', 'JSONEachRow') settings kafka_thread_per_consumer = 0, kafka_num_consumers = 1;
 

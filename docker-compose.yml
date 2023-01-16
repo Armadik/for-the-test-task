@@ -1,8 +1,8 @@
 version: '3'
 services:
   app:
-    image: armadik/app:dev
-    container_name: ${ENV:-dev}_app
+    image: armadik/app:${ENV:-dev}
+    container_name: kafkaspam
     build:
       context: app
       dockerfile: Dockerfile
@@ -20,7 +20,7 @@ services:
        APP_KAFKA_TOPIC: ${APP_KAFKA_TOPIC:-ch-topic}
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:6.1.1
+    image: confluentinc/cp-zookeeper:${KAFKA_VERSION:-6.1.1}
     container_name: zookeeper
     deploy:
       resources:
@@ -34,7 +34,7 @@ services:
       - 2181:2181
 
   kafka:
-    image: confluentinc/cp-kafka:6.1.1
+    image: confluentinc/cp-kafka:${KAFKA_VERSION:-6.1.1}
     container_name: kafka
     depends_on:
     - zookeeper
@@ -57,7 +57,7 @@ services:
 
   clickhouse_server:
     container_name: clickhouse_server
-    image: yandex/clickhouse-server:21.3
+    image: yandex/clickhouse-server:${CLICKHOUSE_VERSION:-21.8.14}
     deploy:
       resources:
         limits:
@@ -74,7 +74,7 @@ services:
       - ./clickhouse/config/allow_experimental_map_type.xml:/etc/clickhouse-server/users.d/allow_experimental_map_type.xml
 
   grafana:
-      image: grafana/grafana:9.3.2
+      image: grafana/grafana:${GRAFANA_VERSION:-9.3.2}
       container_name: grafana
       depends_on:
         - clickhouse_server

@@ -1,5 +1,4 @@
-CREATE TABLE IF NOT EXISTS kafka.queue_kafka
-(
+CREATE TABLE IF NOT EXISTS kafka.queue_kafka(
     timestamp DateTime('Europe/Moscow'),
     bid_01	FLOAT,
     bid_02	FLOAT,
