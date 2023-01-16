@@ -71,6 +71,15 @@ cd for-the-test-task
 docker-compose up -d
 ```
 
+```bash
+CONTAINER ID   IMAGE                              COMMAND                  CREATED         STATUS         PORTS                                        NAMES
+af4be40fb726   armadik/app:home                   "python -m kafkaspam"    2 minutes ago   Up 2 minutes                                                kafkaspam
+4cb177f1c1d7   grafana/grafana:9.3.2              "/run.sh"                3 minutes ago   Up 2 minutes   0.0.0.0:3000->3000/tcp                       grafana
+4c6c667cec4a   confluentinc/cp-kafka:6.1.1        "/etc/confluent/dock…"   3 minutes ago   Up 2 minutes   9092/tcp, 0.0.0.0:29092->29092/tcp           kafka
+d217d33438b0   yandex/clickhouse-server:21.8.14   "/entrypoint.sh"         3 minutes ago   Up 3 minutes   9000/tcp, 0.0.0.0:8123->8123/tcp, 9009/tcp   clickhouse_server
+b817f7d12e48   confluentinc/cp-zookeeper:6.1.1    "/etc/confluent/dock…"   3 minutes ago   Up 3 minutes   2888/tcp, 0.0.0.0:2181->2181/tcp, 3888/tcp   zookeeper
+```
+
 ## Access Grafana
 
 Login 'GRAFANA_ADMIN_USER/GRAFANA_ADMIN__PASSWORD'(default grafana/grafana)
